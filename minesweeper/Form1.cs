@@ -78,12 +78,133 @@ namespace minesweeper
         private FieldButton[,] buttonArray;
         private int[,] origField;
         private int[,] openedField;
+        private readonly Point[] neighbours = { new Point(-1, -1), new Point(-1, 0), new Point(-1, 1), new Point(0, -1),
+                                                new Point(0, 1),   new Point(1, -1), new Point(1, 0),  new Point(1, 1)};
 
         private int width;
         private int height;
         private int numberOfMines;
+        private Timer timer;
         private int leftMines;
         private int currentTime;
+        private int gameState;
+
+        private void DFSClick(Point p)
+        {
+            if(openedField[p.X, p.Y] != 0)
+                return;
+            if (origField[p.X, p.Y] == 0)
+            {
+                openedField[p.X, p.Y] = -1;
+                buttonArray[p.X, p.Y].Enabled = false;
+                for (int i = 0; i < 8; i++)
+                {
+                    Point np = new Point(p.X + neighbours[i].X, p.Y + neighbours[i].Y);
+                    if (0 <= np.X && np.X < height && 0 <= np.Y && np.Y < width)
+                        DFSClick(np);
+                }
+            }
+            else if (origField[p.X, p.Y] != -1)
+            {
+                openedField[p.X, p.Y] = -1;
+                buttonArray[p.X, p.Y].Text = origField[p.X, p.Y].ToString();
+                buttonArray[p.X, p.Y].Enabled = false;
+            }
+        }
+
+        private bool CheckWin()
+        {
+            int res = width * height - numberOfMines;
+            for (int i = 0; i < height; i++)
+                for (int j = 0; j < width; j++)
+                    if (openedField[i, j] == -1)
+                        res--;
+            return (res == 0);
+        }
+
+        private void FieldButton_Click(object sender, MouseEventArgs e)
+        {
+            if (gameState == -1)
+                return;
+            Point p = ((FieldButton)(sender)).pos;
+
+            if (e.Button == MouseButtons.Left && openedField[p.X, p.Y] == 0)
+            {
+                if (gameState == 0)
+                    GenerateMines(p);
+
+                if (origField[p.X, p.Y] == -1)
+                {
+                    buttonArray[p.X, p.Y].Text = "М";
+                    LoseGame();
+                }
+                else
+                {
+                    DFSClick(p);
+                    if (CheckWin())
+                        WinGame();
+                }
+            }
+            else if (e.Button == MouseButtons.Right && openedField[p.X, p.Y] != -1)
+            {
+                if (openedField[p.X, p.Y] == 1)
+                {
+                    leftMines++;
+                    leftMinesLabel.Text = leftMines.ToString("D3");
+                }
+                openedField[p.X, p.Y] = (openedField[p.X, p.Y] + 1) % 3;
+                switch(openedField[p.X, p.Y])
+                {
+                    case 0: buttonArray[p.X, p.Y].Text = ""; break;
+                    case 1:
+                        buttonArray[p.X, p.Y].Text = "F";
+                        leftMines--;
+                        leftMinesLabel.Text = leftMines.ToString("D3");
+                        break;
+                    case 2: buttonArray[p.X, p.Y].Text = "?"; break;
+                }
+            }
+        }
+
+        private int CountMines(Point p)
+        {
+            int res = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                Point np = new Point(p.X + neighbours[i].X, p.Y + neighbours[i].Y);
+                if (0 <= np.X && np.X < height && 0 <= np.Y && np.Y < width && origField[np.X, np.Y] == -1)
+                    res++;
+            }
+            return res;
+        }
+
+        private void GenerateMines(Point first)
+        {
+            HashSet<Point> mines = new HashSet<Point>();
+            Random generator = new Random();
+            while (mines.Count != numberOfMines)
+            {
+                Point rpoint = new Point(generator.Next(0, height), generator.Next(0, width));
+                if(rpoint != first)
+                    mines.Add(rpoint);
+            }
+            for (int i = 0; i < height; i++)
+                for (int j = 0; j < width; j++)
+                {
+                    if (mines.Contains(new Point(i, j)))
+                        origField[i, j] = -1;
+                    else
+                        origField[i, j] = 0;
+                }
+            for (int i = 0; i < height; i++)
+                for (int j = 0; j < width; j++)
+                    if(origField[i, j] != -1)
+                        origField[i, j] = CountMines(new Point(i, j));
+            for (int i = 0; i < height; i++)
+                for (int j = 0; j < width; j++)
+                    openedField[i, j] = 0;
+            gameState = 1;
+        }
 
         private void CreateField()
         {
@@ -91,6 +212,7 @@ namespace minesweeper
             origField = new int[height, width];
             openedField = new int[height, width];
             buttonArray = new FieldButton[height, width];
+            gameState = 0; //field not initiated
             stateLabel.Text = ":)";
             leftMines = numberOfMines; 
             BindButtons();
@@ -103,6 +225,7 @@ namespace minesweeper
                     for (int j = 0; j < width; j++)
                     {
                         buttonArray[i, j] = new FieldButton(new Point(i, j));
+                        buttonArray[i, j].MouseUp += FieldButton_Click;
                         targetForm.Controls.Add(buttonArray[i, j]);
                     }
         }
@@ -148,6 +271,23 @@ namespace minesweeper
             UpdateLayout();
         }
 
+        private void stateLabelClick(object sender, EventArgs e)
+        {
+            NewGame();
+        }
+
+        private void WinGame()
+        {
+            gameState = -1;
+            stateLabel.Text = "8)";
+        }
+
+        private void LoseGame()
+        {
+            gameState = -1;
+            stateLabel.Text = ":(";
+        }
+
         public Field(MainForm form)
         {
             targetForm = form;
@@ -171,6 +311,7 @@ namespace minesweeper
             stateLabel.AutoSize = true;
             stateLabel.Text = ":)";
             stateLabel.Font = new Font(FontFamily.GenericSansSerif, 30.0f, FontStyle.Bold);
+            stateLabel.Click += stateLabelClick;
             targetForm.Controls.Add(stateLabel);
 
             currentTime = 0;
