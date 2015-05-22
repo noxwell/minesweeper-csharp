@@ -36,7 +36,7 @@
             this.любительToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.пРофессионалToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.recordsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.выходToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
@@ -61,7 +61,7 @@
             this.любительToolStripMenuItem,
             this.пРофессионалToolStripMenuItem,
             this.toolStripSeparator2,
-            this.toolStripMenuItem2,
+            this.recordsToolStripMenuItem,
             this.toolStripSeparator3,
             this.выходToolStripMenuItem});
             this.gameToolStripMenuItem.Name = "gameToolStripMenuItem";
@@ -85,29 +85,33 @@
             this.новичокToolStripMenuItem.Name = "новичокToolStripMenuItem";
             this.новичокToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.новичокToolStripMenuItem.Text = "Новичок";
+            this.новичокToolStripMenuItem.Click += new System.EventHandler(this.новичокToolStripMenuItem_Click);
             // 
             // любительToolStripMenuItem
             // 
             this.любительToolStripMenuItem.Name = "любительToolStripMenuItem";
             this.любительToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.любительToolStripMenuItem.Text = "Любитель";
+            this.любительToolStripMenuItem.Click += new System.EventHandler(this.любительToolStripMenuItem_Click);
             // 
             // пРофессионалToolStripMenuItem
             // 
             this.пРофессионалToolStripMenuItem.Name = "пРофессионалToolStripMenuItem";
             this.пРофессионалToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.пРофессионалToolStripMenuItem.Text = "Профессионал";
+            this.пРофессионалToolStripMenuItem.Click += new System.EventHandler(this.пРофессионалToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new System.Drawing.Size(173, 6);
             // 
-            // toolStripMenuItem2
+            // recordsToolStripMenuItem
             // 
-            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(176, 22);
-            this.toolStripMenuItem2.Text = "Таблица рекордов";
+            this.recordsToolStripMenuItem.Name = "recordsToolStripMenuItem";
+            this.recordsToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.recordsToolStripMenuItem.Text = "Таблица рекордов";
+            this.recordsToolStripMenuItem.Click += new System.EventHandler(this.recordsToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
@@ -119,6 +123,7 @@
             this.выходToolStripMenuItem.Name = "выходToolStripMenuItem";
             this.выходToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.выходToolStripMenuItem.Text = "Выход";
+            this.выходToolStripMenuItem.Click += new System.EventHandler(this.выходToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -148,7 +153,7 @@
         private System.Windows.Forms.ToolStripMenuItem любительToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem пРофессионалToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
+        private System.Windows.Forms.ToolStripMenuItem recordsToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripMenuItem выходToolStripMenuItem;
     }

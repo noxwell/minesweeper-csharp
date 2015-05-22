@@ -58,6 +58,99 @@ namespace minesweeper
         {
             field.NewGame();
         }
+
+        private void новичокToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            field.SetMode(0, 10, 10, 10);
+        }
+
+        private void любительToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            field.SetMode(1, 16, 16, 40);
+        }
+
+        private void пРофессионалToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            field.SetMode(2, 16, 30, 99);
+        }
+
+        private void выходToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void recordsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RecordsDialog records = new RecordsDialog();
+            records.ShowDialog();
+        }
+    }
+
+    public class Record
+    {
+        public string name;
+        public int time;
+        public Record()
+        {
+        }
+        public Record(string name, int time)
+        {
+            this.name = name;
+            this.time = time;
+        }
+        public override string ToString()
+        {
+            return name + " " + time.ToString();
+        }
+    }
+
+    public class RecordTable
+    {
+        string filename;
+        public RecordTable()
+        {
+            filename = "records.dat";
+            if (!CheckFile())
+                InitFile();
+        }
+        public RecordTable(string filename)
+        {
+            this.filename = filename;
+            if (!CheckFile())
+                InitFile();
+        }
+        public bool CheckFile()
+        {
+            return File.Exists(filename);
+        }
+        public void InitFile()
+        {
+            Record[] records = new Record[3];
+            string[] lines = new string[3];
+            for (int i = 0; i < 3; i++)
+            {
+                records[i] = new Record(@"Аноним", 999);
+                lines[i] = records[i].ToString();
+            }
+            File.WriteAllLines(filename, lines);
+        }
+        public void UpdateRecords(int mode, Record record)
+        {
+            string[] lines = File.ReadAllLines(filename);
+            lines[mode] = record.ToString();
+            File.WriteAllLines(filename, lines);
+        }
+        public Record[] GetRecords()
+        {
+            string[] lines = File.ReadAllLines(filename);
+            Record[] result = new Record[lines.Length];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string[] tokens = lines[i].Split(' ');
+                result[i] = new Record(tokens[0], Convert.ToInt32(tokens[1]));
+            }
+            return result;
+        }
     }
 
     public class FieldButton : Button
@@ -81,6 +174,8 @@ namespace minesweeper
         private readonly Point[] neighbours = { new Point(-1, -1), new Point(-1, 0), new Point(-1, 1), new Point(0, -1),
                                                 new Point(0, 1),   new Point(1, -1), new Point(1, 0),  new Point(1, 1)};
 
+        private RecordTable recordTable;
+
         private int width;
         private int height;
         private int numberOfMines;
@@ -88,6 +183,7 @@ namespace minesweeper
         private int leftMines;
         private int currentTime;
         private int gameState;
+        private int currentMode;
 
         private void DFSClick(Point p)
         {
@@ -131,7 +227,10 @@ namespace minesweeper
             if (e.Button == MouseButtons.Left && openedField[p.X, p.Y] == 0)
             {
                 if (gameState == 0)
+                {
                     GenerateMines(p);
+                    timer.Start();
+                }
 
                 if (origField[p.X, p.Y] == -1)
                 {
@@ -214,7 +313,10 @@ namespace minesweeper
             buttonArray = new FieldButton[height, width];
             gameState = 0; //field not initiated
             stateLabel.Text = ":)";
-            leftMines = numberOfMines; 
+            leftMines = numberOfMines;
+            leftMinesLabel.Text = leftMines.ToString("D3");
+            currentTime = 0;
+            currentTimeLabel.Text = currentTime.ToString("D3");
             BindButtons();
         }
 
@@ -233,26 +335,30 @@ namespace minesweeper
         private void UnbindButtons()
         {
             if (buttonArray != null)
-                for (int i = 0; i < height; i++)
-                    for (int j = 0; j < width; j++)
-                        if(targetForm.Controls.Contains(buttonArray[i, j]))
+            {
+                int old_height = buttonArray.GetLength(0);
+                int old_width = buttonArray.GetLength(1);
+                for (int i = 0; i < old_height; i++)
+                    for (int j = 0; j < old_width; j++)
+                        if (targetForm.Controls.Contains(buttonArray[i, j]))
                         {
                             targetForm.Controls.Remove(buttonArray[i, j]);
                             buttonArray[i, j].Dispose();
                         }
+            }
         }
 
         private void UpdateLayout()
         {
             int cellHeight = 20;
             int cellWidth = 20;
-            targetForm.Width = cellWidth * width + 35;
-            targetForm.Height = cellHeight * height + 140;
+            int formWidth = cellWidth * width + 50;
+            int formHeight = cellHeight * height + 140;
             
-            Point buttonStart = new Point(10, 90);
+            Point buttonStart = new Point(15, 90);
             leftMinesLabel.Location = new Point(10, 30);
-            stateLabel.Location = new Point((targetForm.Width - stateLabel.Width) / 2, 30);
-            currentTimeLabel.Location = new Point(targetForm.Width - 10 - currentTimeLabel.Width, 50);
+            stateLabel.Location = new Point((formWidth - stateLabel.Width) / 2, 30);
+            currentTimeLabel.Location = new Point(formWidth - 15 - currentTimeLabel.Width, 30);
 
             for (int i = 0; i < height; i++)
             {
@@ -263,12 +369,24 @@ namespace minesweeper
                     buttonArray[i, j].Location = new Point(buttonStart.X + j * cellWidth, buttonStart.Y + i * cellHeight);
                 }
             }
+            targetForm.Width = formWidth;
+            targetForm.Height = formHeight;
         }
 
         public void NewGame()
         {
+            timer.Stop();
             CreateField();
             UpdateLayout();
+        }
+
+        public void SetMode(int mode, int height, int width, int numberOfMines)
+        {
+            this.currentMode = mode;
+            this.height = height;
+            this.width = width;
+            this.numberOfMines = numberOfMines;
+            NewGame();
         }
 
         private void stateLabelClick(object sender, EventArgs e)
@@ -280,12 +398,23 @@ namespace minesweeper
         {
             gameState = -1;
             stateLabel.Text = "8)";
+            recordTable.UpdateRecords(currentMode, new Record("Аноним", currentTime));
+            timer.Stop();
         }
 
         private void LoseGame()
         {
             gameState = -1;
             stateLabel.Text = ":(";
+            timer.Stop();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            currentTime++;
+            if (currentTime > 999)
+                currentTime = 999;
+            currentTimeLabel.Text = currentTime.ToString("D3");
         }
 
         public Field(MainForm form)
@@ -295,7 +424,7 @@ namespace minesweeper
             leftMines = 10;
             leftMinesLabel = new Label();
             leftMinesLabel.AutoSize = false;
-            leftMinesLabel.Width = 80;
+            leftMinesLabel.Width = 76;
             leftMinesLabel.Height = 55;
             leftMinesLabel.Padding = new Padding(0, 0, 0, 0);
             leftMinesLabel.Text = leftMines.ToString("D3");
@@ -316,16 +445,26 @@ namespace minesweeper
 
             currentTime = 0;
             currentTimeLabel = new Label();
+            currentTimeLabel.AutoSize = false;
+            currentTimeLabel.Width = 76;
+            currentTimeLabel.Height = 55;
+            currentTimeLabel.Padding = new Padding(0, 0, 0, 0);
             currentTimeLabel.Text = currentTime.ToString("D3");
             currentTimeLabel.Font = targetForm.digitsFont;
-            currentTimeLabel.Height = 50;
-            currentTimeLabel.Width = 70;
-            //targetForm.Controls.Add(currentTimeLabel);
+            currentTimeLabel.FlatStyle = FlatStyle.Standard;
+            //currentTimeLabel.TextAlign = ContentAlignment.MiddleCenter;
+            currentTimeLabel.BorderStyle = BorderStyle.Fixed3D;
+            currentTimeLabel.BackColor = Color.Black;
+            currentTimeLabel.ForeColor = Color.Red;
+            targetForm.Controls.Add(currentTimeLabel);
 
-            width = 10;
-            height = 10;
-            numberOfMines = 10;
-            NewGame();
+            timer = new Timer();
+            timer.Interval = 1000;
+            timer.Tick += new EventHandler(Timer_Tick);
+
+            recordTable = new RecordTable();
+
+            SetMode(0, 10, 10, 10);
         }
     }
 }
